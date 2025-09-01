@@ -145,8 +145,8 @@ const ScheduleUpload: React.FC = () => {
         progress: 60
       });
 
-      // Call Vercel API for processing
-      const response = await fetch('/api/process-schedule', {
+      // Call local server for processing
+      const response = await fetch('http://localhost:5000/api/process-schedule', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
