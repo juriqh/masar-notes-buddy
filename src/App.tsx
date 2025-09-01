@@ -9,6 +9,7 @@ import Header from "@/components/layout/Header";
 import Navigation from "@/components/layout/Navigation";
 import Dashboard from "./pages/Dashboard";
 import Upload from "./pages/Upload";
+import ScheduleUpload from "./pages/ScheduleUpload";
 import Notes from "./pages/Notes";
 import Reminders from "./pages/Reminders";
 import NotFound from "./pages/NotFound";
@@ -30,6 +31,7 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/upload" element={<Upload />} />
+                  <Route path="/schedule-upload" element={<ScheduleUpload />} />
                   <Route path="/notes" element={<Notes />} />
                   <Route path="/reminders" element={<Reminders />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

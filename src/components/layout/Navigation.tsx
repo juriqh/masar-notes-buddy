@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { Home, Upload, FileText, Bell } from 'lucide-react';
+import { Home, Upload, FileText, Bell, Calendar } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
@@ -12,6 +12,7 @@ const Navigation: React.FC = () => {
   const navItems = [
     { path: '/', icon: Home, label: t('dashboard') },
     { path: '/upload', icon: Upload, label: t('upload') },
+    { path: '/schedule-upload', icon: Calendar, label: t('scheduleUpload') },
     { path: '/notes', icon: FileText, label: t('notes') },
     { path: '/reminders', icon: Bell, label: t('reminders') },
   ];

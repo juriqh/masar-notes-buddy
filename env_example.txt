@@ -1,0 +1,10 @@
+# Supabase Configuration
+SUPABASE_URL=your_supabase_url_here
+SUPABASE_KEY=your_supabase_service_role_key_here
+USER_ID=797281cf-9397-4fca-b983-300825cde186
+
+# Google Cloud Vision API
+GOOGLE_APPLICATION_CREDENTIALS=path/to/your/service-account-key.json
+
+# Image to process
+IMAGE_PATH=schedule.png
