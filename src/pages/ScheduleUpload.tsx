@@ -145,25 +145,45 @@ const ScheduleUpload: React.FC = () => {
         progress: 60
       });
 
-      // Call Vercel API for processing
-      const response = await fetch('/api/process-schedule', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fileName: fileName,
-          base64Image: base64Image,
-          mimeType: selectedFile.type
-        })
-      });
+      // TEMPORARY: Mock successful response for local testing
+      // TODO: Replace with actual Vercel API call once environment variables are set
+      const result = {
+        success: true,
+        classesFound: 3,
+        classesInserted: 3,
+        classes: [
+          {
+            id: '1',
+            class_code: 'CS101',
+            class_name: 'Introduction to Programming',
+            location: 'Building 2, Floor 1, Room 101',
+            days_of_week: 'Mon',
+            start_time: '09:00:00',
+            end_time: '10:30:00'
+          },
+          {
+            id: '2', 
+            class_code: 'MATH201',
+            class_name: 'Calculus I',
+            location: 'Building 3, Floor 2, Room 205',
+            days_of_week: 'Wed',
+            start_time: '11:00:00',
+            end_time: '12:30:00'
+          },
+          {
+            id: '3',
+            class_code: 'ENG101',
+            class_name: 'English Composition',
+            location: 'Building 1, Floor 1, Room 150',
+            days_of_week: 'Fri',
+            start_time: '14:00:00',
+            end_time: '15:30:00'
+          }
+        ]
+      };
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Processing failed');
-      }
-
-      const result = await response.json();
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       setUploadStatus({
         status: 'success',
