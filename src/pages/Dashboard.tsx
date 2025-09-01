@@ -37,6 +37,25 @@ const Dashboard: React.FC = () => {
     const fetchTodayClasses = async () => {
       try {
         console.log('Dashboard: Fetching classes for user:', userId);
+        // First check if user has any classes at all
+        const { data: allClasses, error: allClassesError } = await supabase
+          .from('classes')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('active', true);
+
+        if (allClassesError) {
+          console.error('Error fetching all classes:', allClassesError);
+        } else {
+          console.log('Dashboard: Found all classes:', allClasses);
+          const hasAnyClasses = (allClasses && allClasses.length > 0);
+          console.log('Dashboard: Has any classes:', hasAnyClasses);
+          setHasSchedule(hasAnyClasses);
+          localStorage.setItem('schedule_uploaded', hasAnyClasses.toString());
+          console.log('Dashboard: Set localStorage to:', hasAnyClasses.toString());
+        }
+
+        // Then get today's specific classes
         const { data, error } = await supabase
           .from('classes')
           .select('*')
@@ -46,15 +65,10 @@ const Dashboard: React.FC = () => {
           .order('start_time');
 
         if (error) {
-          console.error('Error fetching classes:', error);
+          console.error('Error fetching today\'s classes:', error);
         } else {
-          console.log('Dashboard: Found classes:', data);
+          console.log('Dashboard: Found today\'s classes:', data);
           setClasses(data || []);
-          const hasData = (data && data.length > 0);
-          console.log('Dashboard: Has data:', hasData);
-          setHasSchedule(hasData);
-          localStorage.setItem('schedule_uploaded', hasData.toString());
-          console.log('Dashboard: Set localStorage to:', hasData.toString());
         }
       } catch (error) {
         console.error('Error fetching classes:', error);
