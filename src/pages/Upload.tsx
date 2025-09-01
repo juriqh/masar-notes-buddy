@@ -26,16 +26,12 @@ const Upload: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const uid = searchParams.get('uid');
-  const date = searchParams.get('date');
-  const code = searchParams.get('code');
+  const uid = searchParams.get('uid') || '797281cf-9397-4fca-b983-300825cde186'; // Default to single user
+  const date = searchParams.get('date') || new Date().toISOString().split('T')[0]; // Default to today
+  const code = searchParams.get('code') || 'general'; // Default class code
 
   useEffect(() => {
-    if (!uid || !date || !code) {
-      // Redirect to dashboard if no parameters provided
-      navigate('/');
-      return;
-    }
+    // No need to redirect - use defaults for single-user system
 
     const fetchClassInfo = async () => {
       try {
@@ -48,8 +44,11 @@ const Upload: React.FC = () => {
 
         if (error) {
           console.error('Error fetching class info:', error);
+          setClassName(code === 'general' ? 'General Notes' : code); // Fallback to class code
         } else if (data) {
-          setClassName(data.class_name || code);
+          setClassName(data.class_name || (code === 'general' ? 'General Notes' : code));
+        } else {
+          setClassName(code === 'general' ? 'General Notes' : code); // Default fallback
         }
       } catch (error) {
         console.error('Error fetching class info:', error);

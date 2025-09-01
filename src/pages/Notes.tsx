@@ -170,7 +170,7 @@ const Notes: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('allClasses')}</SelectItem>
-                  {classes.map((cls) => (
+                  {classes.filter(cls => cls.class_code && cls.class_code.trim() !== '').map((cls) => (
                     <SelectItem key={cls.class_code} value={cls.class_code}>
                       {cls.class_name || cls.class_code} ({cls.class_code})
                     </SelectItem>
