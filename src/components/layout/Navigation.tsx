@@ -11,7 +11,6 @@ const Navigation: React.FC = () => {
 
   const navItems = [
     { path: '/', icon: Home, label: t('dashboard') },
-    { path: '/upload', icon: Upload, label: t('upload') },
     { path: '/schedule-upload', icon: Calendar, label: t('scheduleUpload') },
     { path: '/notes', icon: FileText, label: t('notes') },
     { path: '/reminders', icon: Bell, label: t('reminders') },

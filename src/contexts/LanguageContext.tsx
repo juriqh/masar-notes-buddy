@@ -12,7 +12,7 @@ const translations = {
   en: {
     dashboard: 'Dashboard',
     upload: 'Upload',
-    scheduleUpload: 'Schedule Upload',
+    scheduleUpload: 'Schedule',
     notes: 'Notes',
     reminders: 'Reminders',
     todaySchedule: 'Today\'s Schedule',
@@ -64,12 +64,26 @@ const translations = {
     instruction1: 'Upload a clear image of your King Saud University schedule',
     instruction2: 'Make sure the text is readable and not blurry',
     instruction3: 'The system will automatically extract your classes and times',
-    instruction4: 'Your schedule will be added to your dashboard'
+    instruction4: 'Your schedule will be added to your dashboard',
+    mySchedule: 'My Schedule',
+    noClassesInSchedule: 'No classes in your schedule',
+    resetSchedule: 'Reset Schedule',
+    confirmResetSchedule: 'Are you sure you want to reset your schedule? This will delete all your classes.',
+    scheduleReset: 'Schedule Reset',
+    scheduleResetSuccessfully: 'Your schedule has been reset successfully',
+    error: 'Error',
+    failedToResetSchedule: 'Failed to reset schedule',
+    noSchedule: 'No Schedule',
+    noScheduleDescription: 'You haven\'t uploaded your schedule yet. Upload it to see your classes and manage your academic life.',
+    noNotes: 'No Notes',
+    noNotesDescription: 'You haven\'t uploaded any notes yet. Upload your schedule first to start managing your notes.',
+    noReminders: 'No Reminders',
+    noRemindersDescription: 'You haven\'t created any reminders yet. Upload your schedule first to start managing your reminders.'
   },
   ar: {
     dashboard: 'لوحة التحكم',
     upload: 'رفع الملفات',
-    scheduleUpload: 'رفع الجدول',
+    scheduleUpload: 'الجدول',
     notes: 'الملاحظات',
     reminders: 'التذكيرات',
     todaySchedule: 'جدول اليوم',
@@ -121,7 +135,21 @@ const translations = {
     instruction1: 'ارفع صورة واضحة لجدولك من جامعة الملك سعود',
     instruction2: 'تأكد من أن النص مقروء وغير ضبابي',
     instruction3: 'سيقوم النظام باستخراج محاضراتك وأوقاتها تلقائياً',
-    instruction4: 'سيتم إضافة جدولك إلى لوحة التحكم'
+    instruction4: 'سيتم إضافة جدولك إلى لوحة التحكم',
+    mySchedule: 'جدولي الدراسي',
+    noClassesInSchedule: 'لا توجد محاضرات في جدولك',
+    resetSchedule: 'إعادة تعيين الجدول',
+    confirmResetSchedule: 'هل أنت متأكد من إعادة تعيين جدولك؟ سيتم حذف جميع محاضراتك.',
+    scheduleReset: 'تم إعادة تعيين الجدول',
+    scheduleResetSuccessfully: 'تم إعادة تعيين جدولك بنجاح',
+    error: 'خطأ',
+    failedToResetSchedule: 'فشل في إعادة تعيين الجدول',
+    noSchedule: 'لا يوجد جدول',
+    noScheduleDescription: 'لم تقم برفع جدولك بعد. ارفعه لرؤية محاضراتك وإدارة حياتك الأكاديمية.',
+    noNotes: 'لا توجد ملاحظات',
+    noNotesDescription: 'لم تقم برفع أي ملاحظات بعد. ارفع جدولك أولاً لبدء إدارة ملاحظاتك.',
+    noReminders: 'لا توجد تذكيرات',
+    noRemindersDescription: 'لم تقم بإنشاء أي تذكيرات بعد. ارفع جدولك أولاً لبدء إدارة تذكيراتك.'
   }
 };
 

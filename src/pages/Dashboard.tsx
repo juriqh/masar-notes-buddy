@@ -20,6 +20,11 @@ const Dashboard: React.FC = () => {
   const { t, language } = useLanguage();
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasSchedule, setHasSchedule] = useState(() => {
+    const saved = localStorage.getItem('schedule_uploaded');
+    console.log('Dashboard: Initial localStorage value:', saved);
+    return saved === 'true';
+  });
   
   const today = getTodayInRiyadh();
   const todayStr = formatDateForDisplay(today);
@@ -31,6 +36,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const fetchTodayClasses = async () => {
       try {
+        console.log('Dashboard: Fetching classes for user:', userId);
         const { data, error } = await supabase
           .from('classes')
           .select('*')
@@ -42,7 +48,13 @@ const Dashboard: React.FC = () => {
         if (error) {
           console.error('Error fetching classes:', error);
         } else {
+          console.log('Dashboard: Found classes:', data);
           setClasses(data || []);
+          const hasData = (data && data.length > 0);
+          console.log('Dashboard: Has data:', hasData);
+          setHasSchedule(hasData);
+          localStorage.setItem('schedule_uploaded', hasData.toString());
+          console.log('Dashboard: Set localStorage to:', hasData.toString());
         }
       } catch (error) {
         console.error('Error fetching classes:', error);
@@ -53,6 +65,17 @@ const Dashboard: React.FC = () => {
 
     fetchTodayClasses();
   }, [userId, todayDayOfWeek]);
+
+  // Listen for localStorage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem('schedule_uploaded');
+      setHasSchedule(saved === 'true');
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
@@ -79,6 +102,22 @@ const Dashboard: React.FC = () => {
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : !hasSchedule ? (
+            <div className="text-center py-8">
+              <CalendarDays className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                {t('noSchedule')}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {t('noScheduleDescription')}
+              </p>
+              <a 
+                href="/schedule-upload" 
+                className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+              >
+                {t('uploadSchedule')}
+              </a>
             </div>
           ) : (
             <ScheduleCard 

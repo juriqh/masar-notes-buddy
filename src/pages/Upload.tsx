@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -20,6 +20,7 @@ interface UploadedFile {
 const Upload: React.FC = () => {
   const { t } = useLanguage();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [className, setClassName] = useState<string>('');
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -31,11 +32,8 @@ const Upload: React.FC = () => {
 
   useEffect(() => {
     if (!uid || !date || !code) {
-      toast({
-        title: "Error",
-        description: t('invalidParams'),
-        variant: "destructive",
-      });
+      // Redirect to dashboard if no parameters provided
+      navigate('/');
       return;
     }
 
@@ -169,7 +167,16 @@ const Upload: React.FC = () => {
       <div className="container mx-auto px-4 py-6">
         <Card>
           <CardContent className="flex items-center justify-center py-8">
-            <p className="text-destructive">{t('invalidParams')}</p>
+            <div className="text-center space-y-4">
+              <p className="text-muted-foreground">
+                Redirecting to dashboard...
+              </p>
+              <Link to="/">
+                <Button>
+                  Go to Dashboard
+                </Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>

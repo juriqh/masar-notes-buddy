@@ -32,13 +32,17 @@ const Notes: React.FC = () => {
   const [files, setFiles] = useState<NoteFile[]>([]);
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasSchedule, setHasSchedule] = useState(() => {
+    const saved = localStorage.getItem('schedule_uploaded');
+    return saved === 'true';
+  });
   
   const today = getTodayInRiyadh();
   const defaultDate = formatDateForDisplay(today);
   
   const [filters, setFilters] = useState({
     date: searchParams.get('date') || defaultDate,
-    classCode: searchParams.get('code') || ''
+    classCode: searchParams.get('code') || 'all'
   });
 
   // Hardcoded user ID for single-user MVP
@@ -80,7 +84,7 @@ const Notes: React.FC = () => {
           query = query.eq('class_date', filters.date);
         }
 
-        if (filters.classCode) {
+        if (filters.classCode && filters.classCode !== 'all') {
           query = query.eq('class_code', filters.classCode);
         }
 
@@ -101,6 +105,17 @@ const Notes: React.FC = () => {
     fetchFiles();
   }, [userId, filters]);
 
+  // Listen for localStorage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem('schedule_uploaded');
+      setHasSchedule(saved === 'true');
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const handleFilterChange = (key: string, value: string) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
@@ -108,7 +123,7 @@ const Notes: React.FC = () => {
     // Update URL params
     const newParams = new URLSearchParams();
     if (newFilters.date) newParams.set('date', newFilters.date);
-    if (newFilters.classCode) newParams.set('code', newFilters.classCode);
+    if (newFilters.classCode && newFilters.classCode !== 'all') newParams.set('code', newFilters.classCode);
     setSearchParams(newParams);
   };
 
@@ -154,7 +169,7 @@ const Notes: React.FC = () => {
                   <SelectValue placeholder={t('allClasses')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t('allClasses')}</SelectItem>
+                  <SelectItem value="all">{t('allClasses')}</SelectItem>
                   {classes.map((cls) => (
                     <SelectItem key={cls.class_code} value={cls.class_code}>
                       {cls.class_name || cls.class_code} ({cls.class_code})
@@ -171,6 +186,24 @@ const Notes: React.FC = () => {
         <Card>
           <CardContent className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </CardContent>
+        </Card>
+      ) : !hasSchedule ? (
+        <Card>
+          <CardContent className="text-center py-8">
+            <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-muted-foreground mb-2">
+              {t('noNotes')}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {t('noNotesDescription')}
+            </p>
+            <a 
+              href="/schedule-upload" 
+              className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+            >
+              {t('uploadSchedule')}
+            </a>
           </CardContent>
         </Card>
       ) : (

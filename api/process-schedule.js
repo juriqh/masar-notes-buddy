@@ -17,24 +17,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { filePath, fileName } = req.body;
+    const { fileName, base64Image, mimeType } = req.body;
 
-    if (!filePath || !fileName) {
-      return res.status(400).json({ error: 'Missing filePath or fileName' });
+    if (!fileName || !base64Image) {
+      return res.status(400).json({ error: 'Missing fileName or base64Image' });
     }
-
-    // Get the image from Supabase storage
-    const { data: imageData, error: downloadError } = await supabase.storage
-      .from('schedules')
-      .download(filePath);
-
-    if (downloadError) {
-      throw new Error(`Failed to download image: ${downloadError.message}`);
-    }
-
-    // Convert image to base64 for Gemini
-    const arrayBuffer = await imageData.arrayBuffer();
-    const base64Image = Buffer.from(arrayBuffer).toString('base64');
 
     // Use Gemini Vision to extract schedule data
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
@@ -65,6 +52,7 @@ export default async function handler(req, res) {
     - Extract all classes from the schedule
     - If you see multiple entries for the same course on different days, create separate entries
     - Be precise with Arabic text extraction
+    - Only return valid JSON, no other text
     `;
 
     const result = await model.generateContent([
@@ -72,7 +60,7 @@ export default async function handler(req, res) {
       {
         inlineData: {
           data: base64Image,
-          mimeType: 'image/jpeg'
+          mimeType: mimeType || 'image/jpeg'
         }
       }
     ]);
@@ -149,10 +137,7 @@ export default async function handler(req, res) {
       insertResult = data;
     }
 
-    // Clean up the uploaded image (optional)
-    await supabase.storage
-      .from('schedules')
-      .remove([filePath]);
+    // No need to clean up storage since we're not uploading files
 
     return res.status(200).json({
       success: true,
