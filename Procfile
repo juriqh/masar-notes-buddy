@@ -1,1 +1,1 @@
-worker: python3 railway-bot.py
+worker: python railway-bot.py
