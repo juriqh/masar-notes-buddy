@@ -12,6 +12,7 @@ load_dotenv()
 # Telegram Bot Configuration
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+TELEGRAM_FRIEND_CHAT_ID = os.getenv('TELEGRAM_FRIEND_CHAT_ID')  # Your friend's chat ID
 
 # Timezone configuration (adjust for your location)
 TIMEZONE = pytz.timezone('Asia/Riyadh')  # Saudi Arabia timezone
@@ -22,14 +23,24 @@ bot = Bot(token=TELEGRAM_BOT_TOKEN)
 class TelegramNotifier:
     def __init__(self):
         self.chat_id = TELEGRAM_CHAT_ID
+        self.friend_chat_id = TELEGRAM_FRIEND_CHAT_ID
         
-    async def send_message(self, message: str):
+    async def send_message(self, message: str, to_friend: bool = False):
         """Send a message to Telegram"""
         try:
-            await bot.send_message(chat_id=self.chat_id, text=message)
-            print(f"Message sent: {message}")
+            target_chat = self.friend_chat_id if to_friend else self.chat_id
+            if target_chat:
+                await bot.send_message(chat_id=target_chat, text=message)
+                recipient = "friend" if to_friend else "you"
+                print(f"Message sent to {recipient}: {message}")
         except TelegramError as e:
             print(f"Error sending message: {e}")
+    
+    async def send_message_to_both(self, message: str):
+        """Send a message to both you and your friend"""
+        await self.send_message(message, to_friend=False)  # Send to you
+        if self.friend_chat_id:
+            await self.send_message(message, to_friend=True)  # Send to friend
     
     async def send_morning_reminder(self):
         """Send morning reminder about upcoming classes"""
@@ -196,7 +207,7 @@ class TelegramNotifier:
         
         message += "Have a great day! 🎓\n\n"
         message += "📝 **Upload your notes:** https://YOUR-VERCEL-URL.vercel.app"
-        await self.send_message(message)
+        await self.send_message_to_both(message)
     
     async def send_evening_summary(self):
         """Send evening summary"""
@@ -360,7 +371,7 @@ class TelegramNotifier:
         
         message += "Sweet dreams! 😴\n\n"
         message += "📝 **Upload your notes:** https://YOUR-VERCEL-URL.vercel.app"
-        await self.send_message(message)
+        await self.send_message_to_both(message)
 
 # Initialize the notifier
 notifier = TelegramNotifier()
@@ -369,8 +380,8 @@ async def main():
     """Main function to run scheduled tasks"""
     print("Starting Telegram notification bot on Railway...")
     
-    # Send a startup message
-    await notifier.send_message("🤖 Telegram bot is now running on Railway! 24/7 notifications active.")
+    # Send a startup message to both you and your friend
+    await notifier.send_message_to_both("🤖 Telegram bot is now running on Railway! 24/7 notifications active.")
     
     # Schedule tasks
     while True:
