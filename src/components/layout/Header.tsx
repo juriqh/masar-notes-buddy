@@ -2,29 +2,30 @@ import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Globe, Sparkles, BookOpen } from 'lucide-react';
+import { Globe, Sparkles, BookOpen, Zap, Star } from 'lucide-react';
 
 const Header: React.FC = () => {
   const { language, toggleLanguage, t } = useLanguage();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-200/50 dark:border-slate-800/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-900/60 shadow-sm">
+    <header className="sticky top-0 z-50 w-full border-b border-white/20 bg-glass backdrop-blur-xl shadow-lg">
       <div className="w-full flex h-16 items-center justify-between px-4">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-3">
-            <div className="relative">
-              <div className="w-10 h-10 bg-dusty-blue rounded-xl flex items-center justify-center shadow-lg">
-                <BookOpen className="h-6 w-6 text-white" />
+            <div className="relative group">
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl animate-glow group-hover:scale-110 transition-all duration-300">
+                <BookOpen className="h-8 w-8 text-white animate-pulse-slow" />
               </div>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-coral-pink rounded-full flex items-center justify-center">
-                <Sparkles className="h-2.5 w-2.5 text-white" />
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center animate-bounce-gentle">
+                <Zap className="h-3 w-3 text-white" />
               </div>
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-xl"></div>
             </div>
             <div className="flex flex-col">
-              <h1 className="text-2xl font-bold text-dusty-blue">
+              <h1 className="text-3xl font-display text-gradient animate-shimmer">
                 مسار
               </h1>
-              <span className="text-xs text-muted-foreground font-medium tracking-wide">
+              <span className="text-sm text-white/80 font-medium tracking-wider">
                 Student Assistant
               </span>
             </div>
@@ -32,19 +33,19 @@ const Header: React.FC = () => {
         </div>
         
         <div className="flex items-center space-x-3">
-          <Badge variant="secondary" className="bg-warm-cream text-dusty-blue border-0 px-3 py-1">
-            <Sparkles className="h-3 w-3 mr-1" />
+          <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 px-4 py-2 shadow-lg hover:shadow-xl transition-all duration-300 animate-glow">
+            <Star className="h-4 w-4 mr-2 animate-spin" style={{ animationDuration: '3s' }} />
             AI Powered
           </Badge>
           
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={toggleLanguage}
-            className="flex items-center gap-2 hover:bg-warm-cream transition-colors duration-200 rounded-lg px-3 py-2"
+            className="flex items-center gap-3 bg-white/20 hover:bg-white/30 border-white/30 text-white hover:text-white transition-all duration-300 rounded-xl px-4 py-2 backdrop-blur-sm shadow-lg hover:shadow-xl hover:scale-105"
           >
-            <Globe className="h-4 w-4 text-dusty-blue" />
-            <span className="text-sm font-medium text-dusty-blue">
+            <Globe className="h-5 w-5 animate-spin" style={{ animationDuration: '8s' }} />
+            <span className="text-sm font-semibold">
               {language === 'en' ? 'العربية' : 'English'}
             </span>
           </Button>
