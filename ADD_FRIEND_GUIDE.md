@@ -78,3 +78,5 @@ Have a great day! 🎓
 3. **Redeploy** - done!
 
 Your friend will now receive all the same class notifications as you! 🎉
+
+

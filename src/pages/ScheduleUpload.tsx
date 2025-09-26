@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { Upload, FileImage, CheckCircle, AlertCircle, Loader2, Calendar, Clock, MapPin, User } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
+import { Upload, FileImage, CheckCircle, AlertCircle, Loader2, Calendar, Clock, MapPin, User, Sparkles, FileText, Users, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
@@ -44,6 +46,7 @@ const ScheduleUpload: React.FC = () => {
   });
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notesCount, setNotesCount] = useState<{ [key: string]: number }>({});
 
   const userId = '797281cf-9397-4fca-b983-300825cde186'; // Dedicated user
 
@@ -64,6 +67,7 @@ const ScheduleUpload: React.FC = () => {
           setHasUploaded(true);
           setClasses(data);
           localStorage.setItem('schedule_uploaded', 'true');
+          fetchNotesCount();
         } else {
           setHasUploaded(false);
           setClasses([]);
@@ -300,19 +304,58 @@ const ScheduleUpload: React.FC = () => {
     return grouped;
   };
 
+  const generateTimeSlots = () => {
+    const slots = [];
+    for (let hour = 7; hour <= 22; hour++) {
+      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      slots.push(`${displayHour}:00 ${ampm}`);
+    }
+    return slots;
+  };
+
+  const formatTimeAMPM = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const displayHour = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    return `${displayHour}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+  };
+
+  const isTimeInSlot = (classTime: string, timeSlot: string) => {
+    const [classHour] = classTime.split(':').map(Number);
+    const [slotHourStr, ampm] = timeSlot.split(' ');
+    const [slotHour] = slotHourStr.split(':').map(Number);
+    
+    // Convert slot hour to 24-hour format for comparison
+    let slotHour24 = slotHour;
+    if (ampm === 'PM' && slotHour !== 12) {
+      slotHour24 = slotHour + 12;
+    } else if (ampm === 'AM' && slotHour === 12) {
+      slotHour24 = 0;
+    }
+    
+    return classHour === slotHour24;
+  };
+
   const getClassColor = (classCode: string) => {
-    // Generate consistent colors based on class code
+    // Generate consistent colors based on class code using our color palette
     const colors = [
-      'bg-blue-500',
-      'bg-green-500', 
-      'bg-purple-500',
-      'bg-orange-500',
-      'bg-pink-500',
-      'bg-indigo-500',
-      'bg-teal-500',
-      'bg-red-500',
-      'bg-yellow-500',
-      'bg-cyan-500'
+      'bg-dusty-blue',
+      'bg-coral-pink', 
+      'bg-creamy-yellow',
+      'bg-warm-cream',
+      'bg-blue-400',
+      'bg-green-400',
+      'bg-purple-400',
+      'bg-red-400',
+      'bg-yellow-400',
+      'bg-pink-400',
+      'bg-indigo-400',
+      'bg-teal-400',
+      'bg-orange-400',
+      'bg-cyan-400',
+      'bg-emerald-400',
+      'bg-violet-400'
     ];
     
     // Use class code to get consistent color
@@ -322,6 +365,33 @@ const ScheduleUpload: React.FC = () => {
     }, 0);
     
     return colors[Math.abs(hash) % colors.length];
+  };
+
+  const getClassTextColor = (classCode: string) => {
+    const color = getClassColor(classCode);
+    // For light colors, use dark text; for dark colors, use white text
+    const lightColors = ['bg-creamy-yellow', 'bg-warm-cream', 'bg-yellow-400', 'bg-cyan-400', 'bg-emerald-400'];
+    return lightColors.includes(color) ? 'text-dusty-blue' : 'text-white';
+  };
+
+  const fetchNotesCount = async () => {
+    try {
+      const { data: notes, error } = await supabase
+        .from('notes_uploads')
+        .select('class_code')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      const countMap: { [key: string]: number } = {};
+      notes?.forEach(note => {
+        countMap[note.class_code] = (countMap[note.class_code] || 0) + 1;
+      });
+
+      setNotesCount(countMap);
+    } catch (error) {
+      console.error('Error fetching notes count:', error);
+    }
   };
 
   const handleResetSchedule = async () => {
@@ -381,9 +451,16 @@ const ScheduleUpload: React.FC = () => {
         progress: 0
       });
       
-      // Set localStorage BEFORE reload
+      // Set localStorage and trigger storage event
       localStorage.setItem('schedule_uploaded', 'false');
       console.log('localStorage set to false');
+      
+      // Trigger storage event to notify other components
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'schedule_uploaded',
+        newValue: 'false',
+        oldValue: 'true'
+      }));
       
       console.log('Reset completed, refreshing page...');
       // Force refresh the page to update all components
@@ -408,7 +485,7 @@ const ScheduleUpload: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6 max-w-4xl">
+      <div className="w-full p-6">
         <Card>
           <CardContent className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -423,14 +500,14 @@ const ScheduleUpload: React.FC = () => {
     const dayOrder = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     return (
-      <div className="container mx-auto p-6 max-w-6xl">
+      <div className="w-full p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Calendar className="h-8 w-8" />
+            <h1 className="text-3xl font-bold text-black flex items-center gap-2">
+              <Calendar className="h-8 w-8 text-black" />
               {t('mySchedule')}
             </h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-black mt-2">
               {t('scheduleUploadedSuccessfully')}
             </p>
           </div>
@@ -451,48 +528,184 @@ const ScheduleUpload: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {dayOrder.map(day => {
-            const dayClasses = groupedClasses[day];
-            if (!dayClasses || dayClasses.length === 0) return null;
+        {/* Schedule Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card className="bg-gradient-to-r from-dusty-blue to-dusty-blue/80 text-black">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Calendar className="h-8 w-8" />
+                <div>
+                  <p className="text-sm opacity-90">Total Classes</p>
+                  <p className="text-2xl font-bold">{classes.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-r from-coral-pink to-coral-pink/80 text-black">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <FileText className="h-8 w-8" />
+                <div>
+                  <p className="text-sm opacity-90">Total Notes</p>
+                  <p className="text-2xl font-bold">
+                    {Object.values(notesCount).reduce((sum, count) => sum + count, 0)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-r from-creamy-yellow to-creamy-yellow/80 text-black">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Users className="h-8 w-8" />
+                <div>
+                  <p className="text-sm opacity-90">Unique Classes</p>
+                  <p className="text-2xl font-bold">
+                    {new Set(classes.map(c => c.class_code)).size}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-r from-warm-cream to-warm-cream/80 text-black">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Star className="h-8 w-8" />
+                <div>
+                  <p className="text-sm opacity-90">Classes with Notes</p>
+                  <p className="text-2xl font-bold">
+                    {Object.keys(notesCount).length}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-            return (
-              <Card key={day} className="h-fit">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg text-center">
+        {/* Schedule Grid */}
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
+          {/* Schedule Header */}
+          <div className="bg-dusty-blue text-white">
+            <div className="grid grid-cols-8 gap-0">
+              <div className="p-4 text-center font-semibold border-r border-dusty-blue/20">
+                Time
+              </div>
+              {dayOrder.map(day => (
+                <div key={day} className="p-4 text-center font-semibold border-r border-dusty-blue/20 last:border-r-0">
                     {getDayName(day)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {dayClasses.map((cls) => (
-                    <div key={cls.id} className="border rounded-lg p-3 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-8 h-6 ${getClassColor(cls.class_code)} rounded-md flex items-center justify-center`}>
-                          <span className="text-white text-xs font-bold">{cls.class_code}</span>
                         </div>
-                        <div className="flex-1">
-                          <span className="font-medium text-sm block">{cls.class_name}</span>
-                          <span className="text-xs text-muted-foreground">{cls.location}</span>
+              ))}
                         </div>
                       </div>
-                      <div className="space-y-1 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {formatTime(cls.start_time)} - {formatTime(cls.end_time)}
+
+          {/* Schedule Body */}
+          <div className="divide-y divide-gray-200">
+            {generateTimeSlots().map(timeSlot => (
+              <div key={timeSlot} className="grid grid-cols-8 gap-0 min-h-[60px]">
+                {/* Time Column */}
+                <div className="p-4 text-center font-medium text-dusty-blue bg-warm-cream border-r border-gray-200 flex items-center justify-center">
+                  {timeSlot}
+                </div>
+                
+                {/* Day Columns */}
+                {dayOrder.map(day => {
+                  const dayClasses = groupedClasses[day] || [];
+                  const classesInTimeSlot = dayClasses.filter(cls => 
+                    isTimeInSlot(cls.start_time, timeSlot)
+                  );
+
+                  return (
+                    <div key={day} className="p-2 border-r border-gray-200 last:border-r-0 bg-white">
+                      {classesInTimeSlot.map((cls, index) => (
+                        <TooltipProvider key={cls.id}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div
+                                className={`mb-1 p-2 rounded-md text-xs cursor-pointer hover:scale-105 transition-transform duration-200 ${getClassColor(cls.class_code)} ${getClassTextColor(cls.class_code)}`}
+                              >
+                                <div className="font-semibold truncate flex items-center justify-between">
+                                  {cls.class_code}
+                                  {notesCount[cls.class_code] > 0 && (
+                                    <Badge variant="secondary" className="ml-1 text-xs px-1 py-0">
+                                      {notesCount[cls.class_code]}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="truncate opacity-90">{cls.class_name}</div>
+                                <div className="text-xs opacity-75">
+                                  {formatTimeAMPM(cls.start_time)} - {formatTimeAMPM(cls.end_time)}
                         </div>
-                        {cls.instructor_name && (
-                          <div className="flex items-center gap-1">
-                            <User className="h-3 w-3" />
-                            {cls.instructor_name}
+                                {cls.location && (
+                                  <div className="text-xs opacity-75 truncate">
+                                    📍 {cls.location}
                           </div>
                         )}
                       </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-sm p-4">
+                              <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-4 h-4 rounded ${getClassColor(cls.class_code)}`}></div>
+                                  <h3 className="font-bold text-lg">{cls.class_code}</h3>
+                                </div>
+                                
+                                <div>
+                                  <h4 className="font-semibold text-base mb-1">{cls.class_name}</h4>
+                                  <div className="space-y-2 text-sm">
+                                    <div className="flex items-center gap-2">
+                                      <Clock className="h-4 w-4" />
+                                      <span>{formatTimeAMPM(cls.start_time)} - {formatTimeAMPM(cls.end_time)}</span>
+                                    </div>
+                                    
+                                    {cls.location && (
+                                      <div className="flex items-center gap-2">
+                                        <MapPin className="h-4 w-4" />
+                                        <span>{cls.location}</span>
+                                      </div>
+                                    )}
+                                    
+                                    {cls.instructor_name && (
+                                      <div className="flex items-center gap-2">
+                                        <User className="h-4 w-4" />
+                                        <span>{cls.instructor_name}</span>
+                                      </div>
+                                    )}
+                                    
+                                    <div className="flex items-center gap-2">
+                                      <FileText className="h-4 w-4" />
+                                      <span>{notesCount[cls.class_code] || 0} notes uploaded</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex gap-2 pt-2 border-t">
+                                  <Link to={`/upload?uid=${userId}&date=${new Date().toISOString().split('T')[0]}&code=${cls.class_code}`}>
+                                    <Button size="sm" className="text-xs">
+                                      <Upload className="h-3 w-3 mr-1" />
+                                      Upload Notes
+                                    </Button>
+                                  </Link>
+                                  <Link to={`/notes?code=${cls.class_code}&date=${new Date().toISOString().split('T')[0]}`}>
+                                    <Button size="sm" variant="outline" className="text-xs">
+                                      <FileText className="h-3 w-3 mr-1" />
+                                      View Notes
+                                    </Button>
+                                  </Link>
+                                </div>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ))}
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
             );
           })}
+              </div>
+            ))}
+          </div>
         </div>
 
         {Object.keys(groupedClasses).length === 0 && (
@@ -508,11 +721,24 @@ const ScheduleUpload: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-2xl">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5" />
+    <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+      <div className="w-full px-4 py-8">
+        {/* Header Section */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-dusty-blue rounded-full mb-4">
+            <Upload className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold text-dusty-blue mb-2">
+            {t('uploadSchedule')}
+          </h1>
+          <p className="text-muted-foreground max-w-xl mx-auto">
+            {t('uploadScheduleDescription')}
+          </p>
+        </div>
+
+        <Card className="shadow-xl border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm hover-lift animate-slide-up">
+          <CardHeader className="text-center pb-6">
+            <CardTitle className="text-xl">
             {t('uploadSchedule')}
           </CardTitle>
           <CardDescription>
@@ -522,7 +748,7 @@ const ScheduleUpload: React.FC = () => {
         <CardContent className="space-y-6">
           {/* File Upload Area */}
           <div
-            className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer"
+            className="border-2 border-dashed border-dusty-blue rounded-xl p-12 text-center hover:border-dusty-blue/80 transition-all duration-300 cursor-pointer bg-warm-cream hover-lift animate-scale-in"
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
@@ -536,18 +762,26 @@ const ScheduleUpload: React.FC = () => {
             />
             
             {selectedFile ? (
-              <div className="space-y-2">
-                <FileImage className="h-12 w-12 mx-auto text-blue-500" />
-                <p className="text-lg font-medium">{selectedFile.name}</p>
-                <p className="text-sm text-gray-500">
+              <div className="space-y-4">
+                <div className="w-20 h-20 bg-dusty-blue rounded-full flex items-center justify-center mx-auto animate-bounce-gentle">
+                  <FileImage className="h-10 w-10 text-white" />
+                </div>
+                <div>
+                  <p className="text-xl font-semibold text-slate-800 dark:text-slate-100">{selectedFile.name}</p>
+                  <p className="text-muted-foreground">
                   {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
+                </div>
               </div>
             ) : (
-              <div className="space-y-2">
-                <Upload className="h-12 w-12 mx-auto text-gray-400" />
-                <p className="text-lg font-medium">{t('selectScheduleImage')}</p>
-                <p className="text-sm text-gray-500">{t('dragDropOrClick')}</p>
+              <div className="space-y-4">
+                <div className="w-20 h-20 bg-dusty-blue rounded-full flex items-center justify-center mx-auto animate-bounce-gentle">
+                  <Upload className="h-10 w-10 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-100">{t('selectScheduleImage')}</h3>
+                  <p className="text-muted-foreground">{t('dragDropOrClick')}</p>
+                </div>
               </div>
             )}
           </div>
@@ -557,16 +791,16 @@ const ScheduleUpload: React.FC = () => {
             <Button
               onClick={handleUpload}
               disabled={uploadStatus.status === 'uploading' || uploadStatus.status === 'processing'}
-              className="w-full"
+              className="w-full bg-dusty-blue hover:bg-dusty-blue/90 text-white shadow-lg h-12 text-lg font-semibold"
             >
               {uploadStatus.status === 'uploading' || uploadStatus.status === 'processing' ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                   {uploadStatus.status === 'uploading' ? t('uploading') : t('processing')}
                 </>
               ) : (
                 <>
-                  <Upload className="h-4 w-4 mr-2" />
+                  <Upload className="h-5 w-5 mr-2" />
                   {t('processSchedule')}
                 </>
               )}
@@ -575,31 +809,37 @@ const ScheduleUpload: React.FC = () => {
 
           {/* Status Display */}
           {uploadStatus.status !== 'idle' && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-slate-50 dark:bg-slate-800">
                 {getStatusIcon()}
-                <span className={`font-medium ${getStatusColor()}`}>
+                <span className={`font-semibold text-lg ${getStatusColor()}`}>
                   {uploadStatus.message}
                 </span>
               </div>
               
               {(uploadStatus.status === 'uploading' || uploadStatus.status === 'processing') && (
-                <Progress value={uploadStatus.progress} className="w-full" />
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Progress</span>
+                    <span>{uploadStatus.progress}%</span>
+                  </div>
+                  <Progress value={uploadStatus.progress} className="w-full h-3" />
+                </div>
               )}
 
               {uploadStatus.status === 'success' && uploadStatus.classesFound && (
-                <Alert>
-                  <CheckCircle className="h-4 w-4" />
-                  <AlertDescription>
+                <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <AlertDescription className="text-green-800 dark:text-green-200 font-medium">
                     {t('classesFound').replace('{count}', uploadStatus.classesFound?.toString() || '0')}
                   </AlertDescription>
                 </Alert>
               )}
 
               {uploadStatus.status === 'error' && uploadStatus.error && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
+                <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-900/20">
+                  <AlertCircle className="h-5 w-5 text-red-600" />
+                  <AlertDescription className="text-red-800 dark:text-red-200 font-medium">
                     {uploadStatus.error}
                   </AlertDescription>
                 </Alert>
@@ -608,17 +848,62 @@ const ScheduleUpload: React.FC = () => {
           )}
 
           {/* Instructions */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-medium mb-2">{t('instructions')}</h3>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• {t('instruction1')}</li>
-              <li>• {t('instruction2')}</li>
-              <li>• {t('instruction3')}</li>
-              <li>• {t('instruction4')}</li>
+          <div className="bg-warm-cream p-6 rounded-xl border border-dusty-blue/20">
+            <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-blue-600" />
+              {t('instructions')}
+            </h3>
+            <ul className="text-sm text-slate-700 dark:text-slate-300 space-y-2">
+              <li className="flex items-start gap-2">
+                <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
+                {t('instruction1')}
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
+                {t('instruction2')}
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
+                {t('instruction3')}
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
+                {t('instruction4')}
+              </li>
             </ul>
           </div>
         </CardContent>
       </Card>
+
+      {/* Color Legend */}
+      <div className="mt-6 bg-white rounded-lg shadow-lg p-6">
+        <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
+          <Sparkles className="h-5 w-5" />
+          Class Color Legend
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {Array.from(new Set(classes.map(c => c.class_code))).slice(0, 12).map(classCode => (
+            <div key={classCode} className="flex items-center gap-2 p-2 rounded-md bg-gray-50">
+              <div className={`w-4 h-4 rounded ${getClassColor(classCode)}`}></div>
+              <span className="text-sm font-medium text-gray-700">{classCode}</span>
+              {notesCount[classCode] > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {notesCount[classCode]}
+                </Badge>
+              )}
+            </div>
+          ))}
+          {Array.from(new Set(classes.map(c => c.class_code))).length > 12 && (
+            <div className="flex items-center gap-2 p-2 rounded-md bg-gray-50">
+              <div className="w-4 h-4 rounded bg-gray-400"></div>
+              <span className="text-sm font-medium text-gray-500">
+                +{Array.from(new Set(classes.map(c => c.class_code))).length - 12} more
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+      </div>
     </div>
   );
 };

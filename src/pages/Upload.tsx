@@ -163,7 +163,7 @@ const Upload: React.FC = () => {
 
   if (!uid || !date || !code) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="w-full px-4 py-6">
         <Card>
           <CardContent className="flex items-center justify-center py-8">
             <div className="text-center space-y-4">
@@ -183,25 +183,31 @@ const Upload: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
-      <div className="flex items-center gap-4">
-        <Link to="/">
-          <Button variant="outline" size="sm" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            {t('backToDashboard')}
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold">
+    <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+      <div className="w-full px-4 py-8 space-y-8">
+        {/* Header Section */}
+        <div className="flex items-center gap-4 mb-8">
+          <Link to="/">
+            <Button variant="outline" size="sm" className="flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800">
+              <ArrowLeft className="h-4 w-4" />
+              {t('backToDashboard')}
+            </Button>
+          </Link>
+        </div>
+        
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-creamy-yellow rounded-full mb-4">
+            <ArrowLeft className="h-8 w-8 text-dusty-blue" />
+          </div>
+          <h1 className="text-4xl font-bold text-dusty-blue mb-2">
             {t('uploadNotes')} — {code} — {date}
           </h1>
           {className && (
-            <p className="text-muted-foreground">{className}</p>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">{className}</p>
           )}
         </div>
-      </div>
 
-      <UploadDropzone onUpload={handleUpload} isUploading={isUploading} />
+        <UploadDropzone onUpload={handleUpload} isUploading={isUploading} />
 
       {loading ? (
         <Card>
@@ -212,6 +218,7 @@ const Upload: React.FC = () => {
       ) : (
         <NotesTable files={uploadedFiles} getFileUrl={getFileUrl} />
       )}
+      </div>
     </div>
   );
 };

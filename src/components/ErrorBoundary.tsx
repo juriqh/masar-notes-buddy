@@ -38,7 +38,7 @@ class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="container mx-auto px-4 py-6">
+        <div className="w-full px-4 py-6">
           <Card className="max-w-lg mx-auto">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-destructive">

@@ -16,73 +16,64 @@ interface Class {
 }
 
 interface ScheduleCardProps {
-  classes: Class[];
-  currentDate: string;
-  userId: string;
+  classData: Class;
 }
 
-const ScheduleCard: React.FC<ScheduleCardProps> = ({ classes, currentDate, userId }) => {
+const ScheduleCard: React.FC<ScheduleCardProps> = ({ classData }) => {
   const { t } = useLanguage();
-
-  if (classes.length === 0) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <p className="text-muted-foreground">{t('noClassesToday')}</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const today = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="space-y-4">
-      {classes.map((cls) => (
-        <Card key={cls.id} className="transition-shadow hover:shadow-md">
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <CardTitle className="text-lg">
-                  {cls.class_name || cls.class_code}
-                </CardTitle>
-                <CardDescription className="flex items-center gap-1">
-                  <span className="font-mono text-sm">{cls.class_code}</span>
-                </CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <Link to={`/upload?uid=${userId}&date=${currentDate}&code=${cls.class_code}`}>
-                  <Button size="sm" className="flex items-center gap-1">
-                    <Upload className="h-3 w-3" />
-                    <span className="hidden sm:inline">{t('uploadNow')}</span>
-                  </Button>
-                </Link>
-                <Link to={`/notes?code=${cls.class_code}&date=${currentDate}`}>
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
-                    <FileText className="h-3 w-3" />
-                    <span className="hidden sm:inline">{t('viewNotes')}</span>
-                  </Button>
-                </Link>
-              </div>
+    <Card className="transition-all duration-300 hover:shadow-lg border-0 bg-warm-cream hover-lift animate-fade-in">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="space-y-2">
+            <CardTitle className="text-lg font-semibold text-dusty-blue">
+              {classData.class_name || classData.class_code}
+            </CardTitle>
+            <CardDescription className="flex items-center gap-2">
+              <span className="font-mono text-sm bg-dusty-blue/20 text-dusty-blue px-2 py-1 rounded">
+                {classData.class_code}
+              </span>
+            </CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <Link to={`/upload?uid=797281cf-9397-4fca-b983-300825cde186&date=${today}&code=${classData.class_code}`}>
+              <Button size="sm" className="bg-dusty-blue hover:bg-dusty-blue/90 text-white shadow-md">
+                <Upload className="h-3 w-3" />
+                <span className="hidden sm:inline ml-1">{t('uploadNow')}</span>
+              </Button>
+            </Link>
+            <Link to={`/notes?code=${classData.class_code}&date=${today}`}>
+              <Button variant="outline" size="sm" className="shadow-md hover:bg-dusty-blue hover:text-white border-dusty-blue text-dusty-blue">
+                <FileText className="h-3 w-3" />
+                <span className="hidden sm:inline ml-1">{t('viewNotes')}</span>
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-dusty-blue/80">
+          <div className="flex items-center gap-2">
+            <div className="p-1 bg-dusty-blue/20 rounded">
+              <Clock className="h-3 w-3 text-dusty-blue" />
             </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                <span>
-                  {formatTime(cls.start_time)} - {formatTime(cls.end_time)}
-                </span>
+            <span className="font-medium">
+              {formatTime(classData.start_time)} - {formatTime(classData.end_time)}
+            </span>
+          </div>
+          {classData.location && (
+            <div className="flex items-center gap-2">
+              <div className="p-1 bg-coral-pink/20 rounded">
+                <MapPin className="h-3 w-3 text-coral-pink" />
               </div>
-              {cls.location && (
-                <div className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  <span>{cls.location}</span>
-                </div>
-              )}
+              <span>{classData.location}</span>
             </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

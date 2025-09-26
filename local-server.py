@@ -28,6 +28,14 @@ def load_env():
 
 load_env()
 
+# Also try using python-dotenv as backup
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    print("Loaded environment variables using python-dotenv")
+except ImportError:
+    print("python-dotenv not available, using manual loading")
+
 # Configuration
 SUPABASE_URL = os.getenv('SUPABASE_URL', 'your_supabase_url_here')
 SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY', 'your_supabase_service_role_key_here')
@@ -45,24 +53,8 @@ class ScheduleProcessor:
         """Process image data from frontend upload"""
         print(f"Processing image: {file_name}")
         
-        # Encode image
+        # Encode image for Gemini API
         base64_image = base64.b64encode(image_data).decode('utf-8')
-        
-        # Upload to Supabase storage
-        file_path = f"schedules/{file_name}"
-        
-        print("Uploading to Supabase storage...")
-        result = self.supabase.storage.from_('schedules').upload(
-            file_path, 
-            image_data, 
-            file_options={"content-type": "image/jpeg"}
-        )
-        
-        if result.get('error'):
-            print(f"Upload error: {result['error']}")
-            raise Exception(f"Upload failed: {result['error']}")
-        
-        print("Upload successful!")
         
         # Process with Gemini Vision API
         print("Processing with Gemini Vision API...")
@@ -75,8 +67,6 @@ class ScheduleProcessor:
         print("Uploading classes to database...")
         result = self.upload_classes_to_db(schedule_data)
         
-        # Clean up uploaded image
-        self.supabase.storage.from_('schedules').remove([file_path])
         print("Processing complete!")
         
         return {
@@ -86,7 +76,7 @@ class ScheduleProcessor:
     
     def process_with_gemini(self, base64_image: str) -> List[Dict]:
         """Process image with Gemini Vision API"""
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
         
         prompt = """
         Analyze this King Saud University student schedule image and extract all class information.
@@ -132,11 +122,28 @@ class ScheduleProcessor:
         }
         
         try:
+            print(f"Making request to Gemini API: {url}")
+            print(f"Payload keys: {list(payload.keys())}")
             response = requests.post(url, json=payload)
+            print(f"Response status: {response.status_code}")
+            print(f"Response headers: {dict(response.headers)}")
+            
+            if response.status_code != 200:
+                print(f"Error response: {response.text}")
+                return []
+                
             response.raise_for_status()
             
             result = response.json()
+            print(f"Gemini response keys: {list(result.keys())}")
+            
+            if 'candidates' not in result or not result['candidates']:
+                print("No candidates in response")
+                print(f"Full response: {result}")
+                return []
+                
             text = result['candidates'][0]['content']['parts'][0]['text']
+            print(f"Gemini response text: {text[:200]}...")
             
             # Extract JSON from response
             import re
@@ -152,6 +159,8 @@ class ScheduleProcessor:
                 
         except Exception as e:
             print(f"Gemini API error: {e}")
+            import traceback
+            traceback.print_exc()
             return []
     
     def upload_classes_to_db(self, schedule_data: List[Dict]):
@@ -200,26 +209,27 @@ def process_schedule():
     """API endpoint for processing schedule images"""
     try:
         data = request.get_json()
-        file_path = data.get('filePath')
         file_name = data.get('fileName')
+        base64_image = data.get('base64Image')
+        mime_type = data.get('mimeType', 'image/jpeg')
         
-        if not file_path or not file_name:
-            return jsonify({'error': 'Missing filePath or fileName'}), 400
+        if not file_name or not base64_image:
+            return jsonify({'error': 'Missing fileName or base64Image'}), 400
         
-        # Download image from Supabase storage
-        print(f"Downloading image: {file_path}")
-        response = processor.supabase.storage.from_('schedules').download(file_path)
+        print(f"Processing image: {file_name}")
         
-        if not response:
-            return jsonify({'error': 'Failed to download image'}), 400
+        # Convert base64 to bytes
+        image_data = base64.b64decode(base64_image)
         
-        # Process the image
-        result = processor.process_image_data(response, file_name)
+        # Process the image directly
+        result = processor.process_image_data(image_data, file_name)
         
         return jsonify(result)
         
     except Exception as e:
         print(f"Processing error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/health', methods=['GET'])
@@ -229,6 +239,10 @@ def health_check():
 
 if __name__ == '__main__':
     # Check environment variables
+    print(f"SUPABASE_URL: {SUPABASE_URL[:20]}...")
+    print(f"SUPABASE_KEY: {SUPABASE_KEY[:20]}...")
+    print(f"GEMINI_API_KEY: {GEMINI_API_KEY[:20]}...")
+    
     if SUPABASE_URL == 'your_supabase_url_here':
         print("Error: Please set SUPABASE_URL environment variable")
         exit(1)

@@ -87,3 +87,5 @@ In Railway dashboard, go to **Settings > Deploy** and set:
 - **Environment variables** are secure and encrypted
 
 Your Telegram bot will now run **24/7 in the cloud** and send notifications even when your computer is completely shut down! 🎯
+
+

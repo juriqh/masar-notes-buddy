@@ -372,6 +372,28 @@ class TelegramNotifier:
         message += "Sweet dreams! 😴\n\n"
         message += "📝 **Upload your notes:** https://YOUR-VERCEL-URL.vercel.app"
         await self.send_message_to_both(message)
+    
+    async def send_preclass_reminder(self, class_info):
+        """Send preclass reminder for a specific class"""
+        start_time = datetime.strptime(class_info['start_time'], '%H:%M:%S').strftime('%I:%M %p')
+        end_time = datetime.strptime(class_info['end_time'], '%H:%M:%S').strftime('%I:%M %p')
+        
+        message = f"🔔 **Class Reminder**\n\n"
+        message += f"📚 **{class_info['class_name']}** ({class_info['class_code']})\n"
+        message += f"⏰ Starts in a few minutes: {start_time} - {end_time}\n"
+        message += f"📍 Location: {class_info['location']}\n\n"
+        message += "Don't forget to bring your materials! 📝"
+        
+        await self.send_message_to_both(message)
+    
+    async def send_after_class_reminder(self, class_info):
+        """Send after class reminder to upload notes"""
+        message = f"📝 **Class Finished**\n\n"
+        message += f"📚 **{class_info['class_name']}** ({class_info['class_code']}) just ended.\n\n"
+        message += "Don't forget to upload your notes while they're fresh in your mind! 🧠\n\n"
+        message += "📝 **Upload your notes:** https://YOUR-VERCEL-URL.vercel.app"
+        
+        await self.send_message_to_both(message)
 
 # Initialize the notifier
 notifier = TelegramNotifier()
@@ -383,10 +405,172 @@ async def main():
     # Send a startup message to both you and your friend
     await notifier.send_message_to_both("🤖 Telegram bot is now running on Railway! 24/7 notifications active.")
     
+    # Track sent notifications to avoid duplicates
+    sent_notifications = set()
+    
     # Schedule tasks
     while True:
         now = datetime.now(TIMEZONE)
         current_time = now.time()
+        today_weekday = now.strftime('%a')
+        
+        # Get today's classes
+        hardcoded_schedule = [
+            {
+                'class_code': "1203",
+                'class_name': "مهارات التعلم والتفكير والبحث",
+                'location': "Building 02, Floor 2, Wing A, Room 320",
+                'days_of_week': "Mon",
+                'start_time': "13:00:00",
+                'end_time': "14:50:00",
+                'remind_before_minutes': 15
+            },
+            {
+                'class_code': "1001",
+                'class_name': "مهارات اللغة الإنجليزية (1)",
+                'location': "Building 02, Floor 2, Wing A, Room 302",
+                'days_of_week': "Sun",
+                'start_time': "08:00:00",
+                'end_time': "09:50:00",
+                'remind_before_minutes': 15
+            },
+            {
+                'class_code': "1001",
+                'class_name': "مهارات اللغة الإنجليزية (1)",
+                'location': "Building 02, Floor 2, Wing A, Room 316",
+                'days_of_week': "Wed",
+                'start_time': "08:00:00",
+                'end_time': "09:50:00",
+                'remind_before_minutes': 15
+            },
+            {
+                'class_code': "1001",
+                'class_name': "مهارات اللغة الإنجليزية (1)",
+                'location': "Building 02, Floor 2, Wing A, Room 318",
+                'days_of_week': "Thu",
+                'start_time': "08:00:00",
+                'end_time': "09:50:00",
+                'remind_before_minutes': 15
+            },
+            {
+                'class_code': "1001",
+                'class_name': "مهارات اللغة الإنجليزية (1)",
+                'location': "Building 03, Floor 2, Wing A, Room 415",
+                'days_of_week': "Tue",
+                'start_time': "08:00:00",
+                'end_time': "09:50:00",
+                'remind_before_minutes': 15
+            },
+            {
+                'class_code': "1001",
+                'class_name': "مهارات اللغة الإنجليزية (1)",
+                'location': "Building 03, Floor 2, Wing A, Room 424",
+                'days_of_week': "Mon",
+                'start_time': "08:00:00",
+                'end_time': "09:50:00",
+                'remind_before_minutes': 15
+            },
+            {
+                'class_code': "1001",
+                'class_name': "مهارات اللغة الإنجليزية (1)",
+                'location': "Building 02, Floor 2, Wing A, Room 316",
+                'days_of_week': "Wed",
+                'start_time': "10:00:00",
+                'end_time': "10:50:00",
+                'remind_before_minutes': 15
+            },
+            {
+                'class_code': "1001",
+                'class_name': "مهارات اللغة الإنجليزية (1)",
+                'location': "Building 02, Floor 2, Wing A, Room 318",
+                'days_of_week': "Thu",
+                'start_time': "10:00:00",
+                'end_time': "11:50:00",
+                'remind_before_minutes': 15
+            },
+            {
+                'class_code': "1001",
+                'class_name': "مهارات اللغة الإنجليزية (1)",
+                'location': "Building 03, Floor 2, Wing A, Room 424",
+                'days_of_week': "Mon",
+                'start_time': "10:00:00",
+                'end_time': "11:50:00",
+                'remind_before_minutes': 15
+            },
+            {
+                'class_code': "1202",
+                'class_name': "مهارات الحاسب",
+                'location': "Building 02, Floor 2, Wing A, Room 306",
+                'days_of_week': "Tue",
+                'start_time': "10:00:00",
+                'end_time': "11:50:00",
+                'remind_before_minutes': 15
+            },
+            {
+                'class_code': "1202",
+                'class_name': "مهارات الحاسب (عملي)",
+                'location': "Building 02, Floor 2, Wing A, Room 306",
+                'days_of_week': "Tue",
+                'start_time': "13:00:00",
+                'end_time': "14:50:00",
+                'remind_before_minutes': 15
+            },
+            {
+                'class_code': "1103",
+                'class_name': "مقدمة في الإحصاء",
+                'location': "Building 02, Floor 2, Wing A, Room 305",
+                'days_of_week': "Sun",
+                'start_time': "10:00:00",
+                'end_time': "11:50:00",
+                'remind_before_minutes': 15
+            },
+            {
+                'class_code': "1103",
+                'class_name': "مقدمة في الإحصاء (تمارين)",
+                'location': "Building 02, Floor 2, Wing A, Room 305",
+                'days_of_week': "Sun",
+                'start_time': "13:00:00",
+                'end_time': "14:50:00",
+                'remind_before_minutes': 15
+            },
+            {
+                'class_code': "—",
+                'class_name': "اللياقة والثقافة الصحية",
+                'location': "TBA",
+                'days_of_week': "Sun",
+                'start_time': "13:00:00",
+                'end_time': "14:50:00",
+                'remind_before_minutes': 15
+            }
+        ]
+        
+        # Filter classes for today
+        today_classes = [cls for cls in hardcoded_schedule if cls['days_of_week'] == today_weekday]
+        
+        # Check for preclass and after class notifications
+        for cls in today_classes:
+            start_time = datetime.strptime(cls['start_time'], '%H:%M:%S').time()
+            end_time = datetime.strptime(cls['end_time'], '%H:%M:%S').time()
+            
+            # Calculate reminder time (X minutes before class starts)
+            reminder_time = (datetime.combine(now.date(), start_time) - timedelta(minutes=cls['remind_before_minutes'])).time()
+            
+            # Check if it's time for preclass reminder
+            if (current_time.hour == reminder_time.hour and 
+                current_time.minute == reminder_time.minute):
+                notification_key = f"preclass_{cls['class_code']}_{cls['start_time']}_{now.date()}"
+                if notification_key not in sent_notifications:
+                    await notifier.send_preclass_reminder(cls)
+                    sent_notifications.add(notification_key)
+            
+            # Check if it's time for after class reminder (5 minutes after class ends)
+            after_class_time = (datetime.combine(now.date(), end_time) + timedelta(minutes=5)).time()
+            if (current_time.hour == after_class_time.hour and 
+                current_time.minute == after_class_time.minute):
+                notification_key = f"afterclass_{cls['class_code']}_{cls['end_time']}_{now.date()}"
+                if notification_key not in sent_notifications:
+                    await notifier.send_after_class_reminder(cls)
+                    sent_notifications.add(notification_key)
         
         # Morning reminder at 7:00 AM
         if current_time.hour == 7 and current_time.minute == 0:
@@ -397,6 +581,10 @@ async def main():
         elif current_time.hour == 21 and current_time.minute == 0:
             await notifier.send_evening_summary()
             await asyncio.sleep(60)  # Wait 1 minute to avoid duplicate sends
+        
+        # Clear old notifications at midnight to reset for new day
+        if current_time.hour == 0 and current_time.minute == 0:
+            sent_notifications.clear()
         
         # Check every minute
         await asyncio.sleep(60)

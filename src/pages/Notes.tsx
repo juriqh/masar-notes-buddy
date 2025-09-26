@@ -32,10 +32,7 @@ const Notes: React.FC = () => {
   const [files, setFiles] = useState<NoteFile[]>([]);
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hasSchedule, setHasSchedule] = useState(() => {
-    const saved = localStorage.getItem('schedule_uploaded');
-    return saved === 'true';
-  });
+  const [hasSchedule, setHasSchedule] = useState(false);
   
   const today = getTodayInRiyadh();
   const defaultDate = formatDateForDisplay(today);
@@ -60,8 +57,10 @@ const Notes: React.FC = () => {
 
         if (error) {
           console.error('Error fetching classes:', error);
+          setHasSchedule(false);
         } else {
           setClasses(data || []);
+          setHasSchedule((data && data.length > 0) || false);
         }
       } catch (error) {
         console.error('Error fetching classes:', error);
@@ -109,7 +108,13 @@ const Notes: React.FC = () => {
   useEffect(() => {
     const handleStorageChange = () => {
       const saved = localStorage.getItem('schedule_uploaded');
-      setHasSchedule(saved === 'true');
+      const hasScheduleFromStorage = saved === 'true';
+      setHasSchedule(hasScheduleFromStorage);
+      
+      // If schedule was reset, clear the classes
+      if (!hasScheduleFromStorage) {
+        setClasses([]);
+      }
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -133,15 +138,22 @@ const Notes: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">{t('notes')}</h1>
-        <p className="text-muted-foreground">
-          Browse and view your uploaded notes and files
-        </p>
-      </div>
+    <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+      <div className="w-full px-4 py-8 space-y-8">
+        {/* Header Section */}
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-dusty-blue rounded-full mb-4">
+            <Search className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold text-dusty-blue mb-2">
+            {t('notes')}
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Browse and view your uploaded notes and files
+          </p>
+        </div>
 
-      <Card>
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Search className="h-5 w-5" />
@@ -209,6 +221,7 @@ const Notes: React.FC = () => {
       ) : (
         <NotesTable files={files} getFileUrl={getFileUrl} />
       )}
+      </div>
     </div>
   );
 };

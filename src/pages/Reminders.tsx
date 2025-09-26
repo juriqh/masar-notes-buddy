@@ -20,10 +20,7 @@ interface Reminder {
 const Reminders: React.FC = () => {
   const { t } = useLanguage();
   const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [hasSchedule, setHasSchedule] = useState(() => {
-    const saved = localStorage.getItem('schedule_uploaded');
-    return saved === 'true';
-  });
+  const [hasSchedule, setHasSchedule] = useState(false);
   const [newReminder, setNewReminder] = useState({
     classCode: '',
     className: '',
@@ -55,11 +52,22 @@ const Reminders: React.FC = () => {
     setReminders(prev => prev.filter(r => r.id !== id));
   };
 
+  // Check for schedule status on component mount
+  useEffect(() => {
+    const checkScheduleStatus = () => {
+      const saved = localStorage.getItem('schedule_uploaded');
+      setHasSchedule(saved === 'true');
+    };
+    
+    checkScheduleStatus();
+  }, []);
+
   // Listen for localStorage changes
   useEffect(() => {
     const handleStorageChange = () => {
       const saved = localStorage.getItem('schedule_uploaded');
-      setHasSchedule(saved === 'true');
+      const hasScheduleFromStorage = saved === 'true';
+      setHasSchedule(hasScheduleFromStorage);
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -67,18 +75,22 @@ const Reminders: React.FC = () => {
   }, []);
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Bell className="h-6 w-6" />
-          {t('reminders')}
-        </h1>
-        <p className="text-muted-foreground">
-          {t('remindersDescription')}
-        </p>
-      </div>
+    <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+      <div className="w-full px-4 py-8 space-y-8">
+        {/* Header Section */}
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-coral-pink rounded-full mb-4">
+            <Bell className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold text-coral-pink mb-2">
+            {t('reminders')}
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            {t('remindersDescription')}
+          </p>
+        </div>
 
-      {hasSchedule ? (
+        {hasSchedule ? (
         <>
           <Card>
             <CardHeader>
@@ -204,6 +216,7 @@ const Reminders: React.FC = () => {
           </CardContent>
         </Card>
       )}
+      </div>
     </div>
   );
 };
