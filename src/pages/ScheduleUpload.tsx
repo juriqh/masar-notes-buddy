@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Upload, FileImage, CheckCircle, AlertCircle, Loader2, Calendar, Clock, MapPin, User, Sparkles, FileText, Users, Star } from 'lucide-react';
+import { Upload, FileImage, CheckCircle, AlertCircle, Loader2, Calendar, Clock, MapPin, User, Sparkles, FileText, Users, Star, Zap, Target, Award, Rocket, Brain } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
@@ -340,22 +340,20 @@ const ScheduleUpload: React.FC = () => {
   const getClassColor = (classCode: string) => {
     // Generate consistent colors based on class code using our color palette
     const colors = [
-      'bg-dusty-blue',
-      'bg-coral-pink', 
-      'bg-creamy-yellow',
-      'bg-warm-cream',
-      'bg-blue-400',
-      'bg-green-400',
-      'bg-purple-400',
-      'bg-red-400',
-      'bg-yellow-400',
-      'bg-pink-400',
-      'bg-indigo-400',
-      'bg-teal-400',
-      'bg-orange-400',
-      'bg-cyan-400',
-      'bg-emerald-400',
-      'bg-violet-400'
+      'bg-gradient-to-br from-blue-500 to-purple-600',
+      'bg-gradient-to-br from-pink-500 to-rose-600', 
+      'bg-gradient-to-br from-orange-400 to-yellow-500',
+      'bg-gradient-to-br from-emerald-500 to-teal-600',
+      'bg-gradient-to-br from-indigo-500 to-purple-600',
+      'bg-gradient-to-br from-green-500 to-emerald-600',
+      'bg-gradient-to-br from-red-500 to-pink-600',
+      'bg-gradient-to-br from-yellow-400 to-orange-500',
+      'bg-gradient-to-br from-purple-500 to-indigo-600',
+      'bg-gradient-to-br from-teal-500 to-cyan-600',
+      'bg-gradient-to-br from-rose-500 to-pink-600',
+      'bg-gradient-to-br from-cyan-500 to-blue-600',
+      'bg-gradient-to-br from-lime-500 to-green-600',
+      'bg-gradient-to-br from-violet-500 to-purple-600'
     ];
     
     // Use class code to get consistent color
@@ -368,10 +366,7 @@ const ScheduleUpload: React.FC = () => {
   };
 
   const getClassTextColor = (classCode: string) => {
-    const color = getClassColor(classCode);
-    // For light colors, use dark text; for dark colors, use white text
-    const lightColors = ['bg-creamy-yellow', 'bg-warm-cream', 'bg-yellow-400', 'bg-cyan-400', 'bg-emerald-400'];
-    return lightColors.includes(color) ? 'text-dusty-blue' : 'text-white';
+    return 'text-white'; // All gradients use white text
   };
 
   const fetchNotesCount = async () => {
